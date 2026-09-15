@@ -96,7 +96,7 @@ struct warpinator_projectApp: App {
         Settings {
             SettingsView()
                 .padding(20)
-                .frame(width: 350)
+                .frame(width: 460)
         }
 #endif
     }

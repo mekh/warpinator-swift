@@ -33,9 +33,7 @@ struct SettingsView: View {
         Form {
             
             Section(header: Text("Group code")) {
-                LabeledHStack("Group code") {
-                    TextField("Group Code", text: $groupCodeText)
-                }
+                TextField("", text: $groupCodeText)
                                                 
                 Button("Set code", action: {
                     settings.groupCode = groupCodeText
@@ -68,11 +66,11 @@ struct SettingsView: View {
             
             Section(header: Text("Network ports")) {
                 LabeledHStack("Port") {
-                    TextField("Port", text: $portText)
+                    TextField("", text: $portText)
                 }
                 
                 LabeledHStack("Auth port") {
-                    TextField("Auth port", text: $authPortText)
+                    TextField("", text: $authPortText)
                 }
                 
                 Button("Set ports", action: {
