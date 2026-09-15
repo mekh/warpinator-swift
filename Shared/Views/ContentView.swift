@@ -96,7 +96,10 @@ struct ContentView: View {
     
     private func toggleSidebar() {
 #if os(macOS)
-        NSApp.keyWindow?.firstResponder?.tryToPerform(#selector(NSSplitViewController.toggleSidebar(_:)), with: nil)
+        // Send the action down the responder chain instead of to the current first
+        // responder. Once the sidebar is hidden it drops out of the chain, so aiming at
+        // the first responder directly makes every click after the first one do nothing.
+        _ = NSApp.sendAction(#selector(NSSplitViewController.toggleSidebar(_:)), to: nil, from: nil)
 #endif
     }
 }
