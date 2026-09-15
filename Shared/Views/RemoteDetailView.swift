@@ -128,9 +128,9 @@ struct RemoteDetailView: View {
     #if canImport(AppKit)
     func openFilesMac(onPick: @escaping ([URL])->()) {
         let openPanel = NSOpenPanel()
-        openPanel.prompt = "Select Files"
+        openPanel.prompt = "Select"
         openPanel.allowsMultipleSelection = true
-        openPanel.canChooseDirectories = false
+        openPanel.canChooseDirectories = true
         openPanel.canCreateDirectories = false
         openPanel.canChooseFiles = true
         
