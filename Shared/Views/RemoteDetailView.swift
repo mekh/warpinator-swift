@@ -89,6 +89,18 @@ struct RemoteDetailView: View {
 #endif
             .toolbar {
                     
+                    ToolbarItem(placement: .navigation) {
+                        Button(action: viewModel.toggleAutoAccept) {
+                            Label(
+                                "Auto-accept",
+                                systemImage: viewModel.autoAccept ? "checkmark.shield.fill" : "shield"
+                            )
+                        }
+                        .help(viewModel.autoAccept
+                              ? "Transfers from this device start without asking"
+                              : "Transfers from this device have to be accepted")
+                    }
+
                     ToolbarItem(placement: .primaryAction) {
                         Button("Send files") {
 #if os(macOS)
@@ -217,7 +229,14 @@ extension RemoteDetailView {
         
         @Published
         var disableSendFileButton: Bool = true
-        
+
+        /// Whether transfers from this device are accepted without asking.
+        @Published
+        var autoAccept: Bool = false
+
+        /// The remote id, which is the mDNS instance name and is stable across restarts.
+        private let remoteID: String
+
         private let remote: RemoteProtocol
         
         private var tokens: Set<AnyCancellable> = .init()
@@ -233,11 +252,20 @@ extension RemoteDetailView {
                 try? await remote.ping()
             }
         }
+
+        func toggleAutoAccept() {
+            autoAccept.toggle()
+
+            TrustedRemotes.shared.setTrusted(remoteID, autoAccept)
+        }
         
         init(remote: RemoteProtocol) {
             self.remote = remote
             
             self.title = remote.peer.hostName
+
+            self.remoteID = remote.peer.name
+            self.autoAccept = TrustedRemotes.shared.isTrusted(remote.peer.name)
             
             remote.transfers.sink { transfers in
                 let transferVMS: [TransferOpView.ViewModel] = transfers.map {

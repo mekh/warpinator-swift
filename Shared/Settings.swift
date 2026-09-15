@@ -25,7 +25,7 @@ protocol WarpSettings {
 }
 
 enum WarpSettingsKey: String {
-    case port, authPort, groupcode, canDiscoverSelf, downloadFolderBookmark
+    case port, authPort, groupcode, canDiscoverSelf, downloadFolderBookmark, trustedRemotes
 }
 
 extension WarpSettingsKey {
@@ -270,4 +270,50 @@ class DownloadFolder: ObservableObject {
     }
 
 #endif
+}
+
+
+/// Remotes whose incoming transfers are started without asking the user first.
+///
+/// Identified by the remote id, which is the mDNS instance name and stays stable across
+/// restarts on both sides.
+class TrustedRemotes: ObservableObject {
+
+    static let shared = TrustedRemotes()
+
+    private let key = WarpSettingsKey.trustedRemotes.rawValue
+
+    /// Guards `ids`, which is read from the gRPC handler threads and written from the UI.
+    private let lock = NSLock()
+
+    private var ids: Set<String>
+
+    private init() {
+        self.ids = Set(UserDefaults.standard.stringArray(forKey: key) ?? [])
+    }
+
+    func isTrusted(_ id: String) -> Bool {
+        lock.lock()
+        defer { lock.unlock() }
+
+        return ids.contains(id)
+    }
+
+    func setTrusted(_ id: String, _ trusted: Bool) {
+        lock.lock()
+
+        if trusted {
+            ids.insert(id)
+        } else {
+            ids.remove(id)
+        }
+
+        let stored = Array(ids)
+
+        lock.unlock()
+
+        UserDefaults.standard.set(stored, forKey: key)
+
+        objectWillChange.send()
+    }
 }

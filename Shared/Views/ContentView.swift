@@ -122,6 +122,10 @@ struct RemoteListViewItem: View {
     
     @ObservedObject var remote: DiscoveryViewModel.RemoteItem
     
+    /// Observed so that the badge appears and disappears as the device is trusted or
+    /// untrusted from its detail view.
+    @ObservedObject var trustedRemotes = TrustedRemotes.shared
+    
     @State
     var isDropTargeted = false
     
@@ -141,7 +145,20 @@ struct RemoteListViewItem: View {
                     }
                 }.padding()
             }
+
             Spacer()
+
+            if trustedRemotes.isTrusted(remote.id) {
+                VStack {
+                    Image(systemName: "checkmark.shield.fill")
+                        .foregroundColor(.secondary)
+                        .help("Transfers from this device start without asking")
+
+                    Spacer()
+                }
+                .padding(.top, 10)
+                .padding(.trailing, 6)
+            }
         }
         .background(
             RoundedRectangle(cornerRadius: 10)

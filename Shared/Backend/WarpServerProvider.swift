@@ -93,8 +93,30 @@ class WarpServerProvider: WarpAsyncProvider {
         let transferOp = TransferFromRemote.createFromRequest(request, remote: remote)
         
         remote.transfersFromRemote[request.info.timestamp] = transferOp
-                
+
+        // A trusted remote skips the confirmation, unless accepting would replace files
+        // that are already there. Overwriting is the one outcome that cannot be undone,
+        // so it keeps asking even for a trusted device.
+        if TrustedRemotes.shared.isTrusted(remote.id), !transferOp.checkIfWillOverwrite() {
+            autoAccept(transferOp)
+        }
+
         return VoidType()
+    }
+
+    /// Accept a transfer without waiting for the user.
+    ///
+    /// Accepting calls startTransfer back on the sender, and a sender only serves that
+    /// call once it has marked its own operation as requested. A person needs seconds to
+    /// press a button, so interactively this is never close; accepting straight from this
+    /// handler would instead race the response to the very request being answered here.
+    /// The delay keeps the callback behind that response.
+    private func autoAccept(_ transferOp: TransferFromRemote) {
+        Task {
+            try? await Task.sleep(nanoseconds: 250_000_000)
+
+            try? await transferOp.accept()
+        }
     }
 
     func pauseTransferOp(request: OpInfo, context: GRPCAsyncServerCallContext) async throws -> VoidType {
