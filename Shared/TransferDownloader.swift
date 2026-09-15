@@ -18,7 +18,6 @@ enum TransferDownloaderError: Error {
     case invalidTopDirBasenames
     case invalidRelativePath
     case failedCreatingPath
-    case timeNotSet
     case symLinksAreNotSupported
     case moreFilesThanAdvertised
     case finishedWithMoreThan0Remaining
@@ -38,8 +37,6 @@ extension TransferDownloaderError: LocalizedError {
             return "invalidRelativePath"
         case .failedCreatingPath:
             return "failedCreatingPath"
-        case .timeNotSet:
-            return "timeNotSet"
         case .symLinksAreNotSupported:
             return "symLinksAreNotSupported"
         case .moreFilesThanAdvertised:
@@ -178,15 +175,18 @@ class TransferDownloader {
             throw TransferDownloaderError.invalidFolderChunk
         }
         
-        guard chunk.hasTime else {
-            throw TransferDownloaderError.timeNotSet
-        }
-        
-        let timestamp = NSDate.from(time: chunk.time)
-        
         let newFolderPath = try self.sanitizeRelativePath(relativePath: chunk.relativePath)
         
-        try fileManager.createDirectory(at: newFolderPath, withIntermediateDirectories: true, attributes: [.modificationDate: timestamp])
+        // The modification time is optional, the same way it is for file chunks above:
+        // a sender is not required to set it. Warpinator for Android leaves it unset on
+        // directory chunks, which used to fail the whole transfer.
+        var attributes: [FileAttributeKey: Any] = [:]
+        
+        if chunk.hasTime {
+            attributes[.modificationDate] = NSDate.from(time: chunk.time)
+        }
+        
+        try fileManager.createDirectory(at: newFolderPath, withIntermediateDirectories: true, attributes: attributes)
     }
     
     func handleSymLink(chunk: FileChunk, isFirstChunk: Bool) throws {
