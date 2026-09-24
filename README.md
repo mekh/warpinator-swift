@@ -22,11 +22,12 @@ There are two ways to run the app:
     - [X] Multiple files/folders
 - [ ] Sending files:
     - [X] Single file
-    - [ ] Single folder
+    - [X] Single folder
     - [ ] Multiple files/folders
 - [X] Show received file location
     - [X] on macOS
     - [X] on iOS
+- [X] Trusted devices, whose transfers start without a confirmation
 - [ ] Settings view (currently macOS only)
     - [X] Set groupcode
     - [X] Choose the folder received files are saved to
