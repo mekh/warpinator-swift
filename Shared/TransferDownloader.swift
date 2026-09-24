@@ -257,7 +257,7 @@ class TransferDownloader {
         let combinedURL = relativeURL.deletingLastPathComponent().appendingPathComponent(targetPath).standardized
         
         // Get the first path component of the combined path
-        let firstPathComponent = combinedURL.firstPathComponent
+        let firstPathComponent = combinedURL.firstStandardizedPathComponent
         
         // Check if the first path component is in the allowed top directories
         guard topDirBasenames.contains(firstPathComponent) else {
@@ -294,13 +294,21 @@ class TransferDownloader {
             return nil
         }
         
-        let path = url.standardized.path
+        var standardized = url.standardized.path
         
-        guard path.count > 0 else {
+        // Resolving ".." inside a relative path yields a leading "/". Left in place it
+        // would make the result absolute further down, so a path that came in relative
+        // is kept relative. A path that was already absolute stays absolute, and the
+        // callers reject it because "/" is never one of the top directory names.
+        if !path.hasPrefix("/") && standardized.hasPrefix("/") {
+            standardized.removeFirst()
+        }
+        
+        guard standardized.count > 0 else {
             return nil
         }
         
-        return path
+        return standardized
     }
     
     /// Interprets the topDirName as URL and asserts that it has exactly one path component.
@@ -324,6 +332,12 @@ class TransferDownloader {
 extension URL {
     var firstPathComponent: String {
         return self.pathComponents[0]
+    }
+    
+    /// The first path component, skipping the leading "/" that standardizing a relative
+    /// path introduces once its ".." segments have been resolved.
+    var firstStandardizedPathComponent: String {
+        return self.pathComponents.first(where: { $0 != "/" }) ?? ""
     }
 }
 
