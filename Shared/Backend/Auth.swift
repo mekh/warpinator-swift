@@ -127,7 +127,11 @@ class Auth {
     
     func processRemoteCertificate(lockedCertificate: String) throws -> Bytes {
                         
-        let decoded = Data(base64Encoded: lockedCertificate, options: .ignoreUnknownCharacters)!
+        // The certificate arrives from the network, so it cannot be assumed to be valid
+        // base64: force unwrapping here crashed the app on anything malformed.
+        guard let decoded = Data(base64Encoded: lockedCertificate, options: .ignoreUnknownCharacters) else {
+            throw AuthError.failedProcessingRemoteCertificate("the locked certificate is not valid base64")
+        }
         
         let bytes = Bytes(decoded)
         
